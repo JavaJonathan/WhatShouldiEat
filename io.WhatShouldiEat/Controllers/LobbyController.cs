@@ -15,6 +15,15 @@ using Newtonsoft.Json.Linq;
 
 namespace io.WhatShouldiEat.Controllers
 {
+    /*
+         * Lobby Controller will need the following api endpoints:
+         * Create Lobby
+         * Add User to Lobby
+         * Remove User from Lobby
+         * Get All Lobby Members
+         * End Lobby
+    */
+
     [Route("api/Lobby/")]
     public class LobbyController : Controller
     {
@@ -34,13 +43,32 @@ namespace io.WhatShouldiEat.Controllers
             var restaurntListId = usersInfo["resturantListId"].ToString();
             var secretKey = usersInfo["secretKey"].ToString();
 
-
             //Guard Clauses
             if (userId == null || secretKey == null || restaurntListId == null) return "{ \"Error\": \"Required paramater null\" }";
             //checks if the users exists
             if (!Models.User.CheckIfUserExists(usersInfo["userId"].ToString())) { return "{ \"Error\": \"User does not exist\" }"; }
 
             return Lobby.Create(userId, restaurntListId);
+        }
+
+        [HttpPost("Join")]
+        public string JoinLobby([FromHeader] string lobbyId, [FromHeader] string userInfo, [FromHeader] string pinNumber)
+        {
+            //we will need to ensure at least a guid is coming in to prevent anything malicious
+            try { Guid.Parse(lobbyId); } catch (Exception e) { return String.Format("{\"Error\": \"{0}\"}", e.ToString()); }
+
+            var usersInfo = JObject.Parse(userInfo);
+            var userId = usersInfo["userId"].ToString();
+            var restaurntListId = usersInfo["resturantListId"].ToString();
+            var secretKey = usersInfo["secretKey"].ToString();
+
+            //Guard Clauses
+            if (userId == null || secretKey == null || restaurntListId == null) return "{ \"Error\": \"Required paramater null\" }";
+
+            //we will need a function to validate the id's as they come in
+
+
+            return Lobby.Join(pinNumber, lobbyId, userId);
         }
 
         //// GET api/<controller>/5

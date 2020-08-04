@@ -7,7 +7,11 @@ namespace io.WhatShouldiEat.Models
 {
     public class Lobby
     {
-        private Guid LobbyId { get; set; }
+        public string LobbyId { get; set; }
+        public string OwnerId { get; set; }
+        public string RestaurantListId { get; set; }
+        public string EntryPinNumber { get; set; }
+        public string CreatedOn { get; set; }
 
         //we will first need to create the lobby
         //this method will need to return a pin number so the user can give to their friends
@@ -20,7 +24,7 @@ namespace io.WhatShouldiEat.Models
             //in the Lobby Table we can also save the Pin Number to check against when a user would like to join a lobby
 
             //there will also need to be a food list chose for the lobby to eventually vote on
-            List<string> pinNumbers = Repository.GetExistingPinNumbers();
+            List<Lobby> Lobbies = Repository.GetExistingPinNumbers();
 
             string pinNumber;
 
@@ -33,7 +37,7 @@ namespace io.WhatShouldiEat.Models
                     pinNumber += randomNumber.Next(0,9);
                 }
 
-                var checkList = pinNumbers.FirstOrDefault(p => p.Equals(pinNumber));
+                var checkList = Lobbies.FirstOrDefault(Lobby => Lobby.EntryPinNumber.Equals(pinNumber));
 
                 if(checkList == null) break;
             }
@@ -47,16 +51,17 @@ namespace io.WhatShouldiEat.Models
         }
 
         //we will also need a method to allow joining a party
-        public static string Join(int? PinNumber)
+        public static string Join(string pinNumber, string lobbyId, string userId)
         {
-            //we will have client side validation to check if the pin number is the correct format, so we will only have to check if the lobby the user is trying to connect to exists
-            if(PinNumber == null) { }
+            Lobby lobbyToJoin = Repository.GetExistingPinNumbers().FirstOrDefault(lobby => lobby.EntryPinNumber.Equals(pinNumber));
 
-            //we will have to query the database to either connect the user to a lobby or return an invalid pin number message
-            return Repository.ValidatePinNumber(PinNumber) ? "Everything went well, yay!" : "Please enter a valid pin number.";
+            if(lobbyToJoin == null) { return "Invalid Creds"; }
+            //we will still throw an error saying incorrect credentials if the lobby id doesnt match even if the pin number is correct
+            if (lobbyToJoin.LobbyId != lobbyId) { return "Invalid Creds"; }
 
             //if the lobby the user is trying  to join exists, we will need to insert a value into the LobbyMembers Table with the user id and lobby id as the foreign key 
             //it will be used as a mapping table
+            return Repository.AddLobbyMember(lobbyId, userId);
         }
 
         //we will also need a method to return everyone in a specific lobby

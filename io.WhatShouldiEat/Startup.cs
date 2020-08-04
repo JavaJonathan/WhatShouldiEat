@@ -28,7 +28,7 @@ namespace io.WhatShouldiEat
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            Repository.setConnection(Configuration.GetConnectionString("DefaultConnection"));
+            Repository.SetConnection(Configuration.GetConnectionString("DefaultConnection"));
 
             services.Configure<CookiePolicyOptions>(options =>
             {

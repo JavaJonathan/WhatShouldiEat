@@ -16,7 +16,7 @@ namespace io.WhatShouldiEat.Models
         private static string ConnectionString { get; set; }
 
         //this is called on set up
-        public static void setConnection(string connectionString)
+        public static void SetConnection(string connectionString)
         {
             SqlConnection = new SqlConnection();
             ConnectionString = connectionString;
@@ -51,9 +51,78 @@ namespace io.WhatShouldiEat.Models
                     }
                 }
             }
-
             return user;
         }
+
+        public static Lobby GetLobbyById(string lobbyId)
+        {
+            Lobby lobbyObj = new Lobby();
+
+            using (SqlConnection)
+            {
+                SqlConnection.ConnectionString = ConnectionString;
+                SqlConnection.Open();
+
+                var getLobbyComannd = $@"select * from Lobby where LobbyId = '{lobbyId}'";
+
+                using(var command = new SqlCommand(getLobbyComannd, SqlConnection))
+                {
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            lobbyObj.LobbyId = reader[0].ToString();
+                            lobbyObj.OwnerId = reader[1].ToString();
+                            lobbyObj.RestaurantListId = reader[2].ToString();
+                            lobbyObj.EntryPinNumber = reader[3].ToString();
+                            lobbyObj.CreatedOn = reader[4].ToString();                              
+                        }
+                    }
+                }
+            }
+           return lobbyObj;
+        }
+
+        public static string AddLobbyMember(string userId, string lobbyId)
+        {
+            string lobbyMemberId = String.Empty;
+
+            using (SqlConnection)
+            {
+                SqlConnection.ConnectionString = ConnectionString;
+                SqlConnection.Open();
+
+                var getLobbyMemberId = $@"insert into LobbyMembers 
+                                          values(NewId(), '{userId}', '{lobbyId}')";
+
+                using (var command = new SqlCommand(getLobbyMemberId, SqlConnection))
+                {
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            //do nothing
+                        }
+                    }
+                }
+
+                var getLobbyMemberIdCommand = $@"select * from LobbyMembers where LobbyId = '{lobbyId}' and UserId = '{userId}'";
+
+                using (var command = new SqlCommand(getLobbyMemberIdCommand, SqlConnection))
+                {
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            lobbyMemberId = reader[0].ToString();
+                        }
+                    }
+                }
+
+            }
+
+            return lobbyMemberId;
+        } 
 
         //in progress, we do not seem to need this function just yet
         public static RestaurantList GetRestaurantListByid(string restaurantId, string userId)
@@ -67,20 +136,19 @@ namespace io.WhatShouldiEat.Models
 
                 var getRestuarantCommand = $@"select * from ";
             }
-
                 return restaurantList;
         }
 
-        public static List<string> GetExistingPinNumbers()
+        public static List<Lobby> GetExistingPinNumbers()
         {
-            List<string> pinNumbers = new List<string>();
+            List<Lobby> Lobbies = new List<Lobby>();
 
             using (SqlConnection)
             {
                 SqlConnection.ConnectionString = ConnectionString;
                 SqlConnection.Open();
 
-                var CreateLobbyCommand = $@"select EntryPinNumber from Lobby";
+                var CreateLobbyCommand = $@"select * from Lobby";
 
                 using (var command = new SqlCommand(CreateLobbyCommand, SqlConnection))
                 {
@@ -88,13 +156,20 @@ namespace io.WhatShouldiEat.Models
                     {
                         while (reader.Read())
                         {
-                            pinNumbers.Add(reader[0].ToString());
+                            Lobbies.Add(new Lobby
+                            {
+                                LobbyId = reader[0].ToString(),
+                                OwnerId = reader[1].ToString(),
+                                RestaurantListId = reader[2].ToString(),
+                                EntryPinNumber = reader[3].ToString(),
+                                CreatedOn = reader[4].ToString()
+                            });
                         }
                     }
                 }
             }
-
-            return pinNumbers;
+            //return the entire object in case we would like to use any properties anywhere else in the program
+            return Lobbies;
         }
 
         public static string CreateALobbyRecord(string userId, string restaurantListId, string pinNumber)
@@ -133,37 +208,10 @@ namespace io.WhatShouldiEat.Models
                         }
                     }
                 }
-
             }
 
             return LobbyId;
 
-        }
-
-        public static bool ValidatePinNumber(int? pinNumber)
-        {
-            var EverythingWentWell = false;
-
-            using (SqlConnection)
-            {
-                SqlConnection.ConnectionString = ConnectionString;
-                SqlConnection.Open();
-
-                var CreateLobbyCommand = $@"select * from Lobby where EntryPinNumber = '{pinNumber}'";
-
-                using (var command = new SqlCommand(CreateLobbyCommand, SqlConnection))
-                {
-                    using (var reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            EverythingWentWell = true;
-                        }
-                    }
-                }
-            }
-
-            return EverythingWentWell;
         }
 
         public static string SaveRestaurantListToUser(User user, RestaurantList restaurantList)
