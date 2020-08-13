@@ -27,7 +27,6 @@ namespace io.WhatShouldiEat.Controllers
     [Route("api/Lobby/")]
     public class LobbyController : Controller
     {
-        // GET: api/CreateLobby
         [HttpPost("Create")]        
         public string CreateLobby([FromHeader] string userInfo)
         {
@@ -55,7 +54,7 @@ namespace io.WhatShouldiEat.Controllers
         public string JoinLobby([FromHeader] string lobbyId, [FromHeader] string userInfo, [FromHeader] string pinNumber)
         {
             //we will need to ensure at least a guid is coming in to prevent anything malicious
-            try { Guid.Parse(lobbyId); } catch (Exception e) { return String.Format("{\"Error\": \"{0}\"}", e.ToString()); }
+            try { Guid.Parse(lobbyId); } catch (Exception) { return "Invalid Lobby ID"; }
 
             var usersInfo = JObject.Parse(userInfo);
             var userId = usersInfo["userId"].ToString();
@@ -66,9 +65,25 @@ namespace io.WhatShouldiEat.Controllers
             if (userId == null || secretKey == null || restaurntListId == null) return "{ \"Error\": \"Required paramater null\" }";
 
             //we will need a function to validate the id's as they come in
-
-
             return Lobby.Join(pinNumber, lobbyId, userId);
+        }
+
+        [HttpPost("Close")]
+        public string CloseLobby([FromHeader] string lobbyId, [FromHeader] string pinNumber, [FromHeader] string secretKey)
+        {
+            return Lobby.Close(lobbyId, pinNumber);
+        }
+
+        [HttpGet("GetMembers")]
+        public string GetAllLobbyMembers([FromHeader] string lobbyId, [FromHeader] string pinNumber)
+        {
+            return JsonConvert.SerializeObject(Lobby.GetMemberList(lobbyId, pinNumber));
+        }
+
+        [HttpGet("hi")]
+        public string TestGet()
+        {
+            return "hi";
         }
 
         //// GET api/<controller>/5

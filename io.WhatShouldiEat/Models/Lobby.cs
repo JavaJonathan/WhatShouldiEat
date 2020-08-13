@@ -24,7 +24,7 @@ namespace io.WhatShouldiEat.Models
             //in the Lobby Table we can also save the Pin Number to check against when a user would like to join a lobby
 
             //there will also need to be a food list chose for the lobby to eventually vote on
-            List<Lobby> Lobbies = Repository.GetExistingPinNumbers();
+            List<Lobby> Lobbies = LobbyRepository.GetExistingPinNumbers();
 
             string pinNumber;
 
@@ -42,7 +42,7 @@ namespace io.WhatShouldiEat.Models
                 if(checkList == null) break;
             }
             
-            var LobbyId = Repository.CreateALobbyRecord(userId, restaurantList, pinNumber);
+            var LobbyId = LobbyRepository.CreateALobbyRecord(userId, restaurantList, pinNumber);
 
             if (LobbyId != String.Empty) { return LobbyId; }
 
@@ -53,7 +53,7 @@ namespace io.WhatShouldiEat.Models
         //we will also need a method to allow joining a party
         public static string Join(string pinNumber, string lobbyId, string userId)
         {
-            Lobby lobbyToJoin = Repository.GetExistingPinNumbers().FirstOrDefault(lobby => lobby.EntryPinNumber.Equals(pinNumber));
+            Lobby lobbyToJoin = LobbyRepository.GetExistingPinNumbers().FirstOrDefault(lobby => lobby.EntryPinNumber.Equals(pinNumber));
 
             if(lobbyToJoin == null) { return "Invalid Creds"; }
             //we will still throw an error saying incorrect credentials if the lobby id doesnt match even if the pin number is correct
@@ -61,21 +61,48 @@ namespace io.WhatShouldiEat.Models
 
             //if the lobby the user is trying  to join exists, we will need to insert a value into the LobbyMembers Table with the user id and lobby id as the foreign key 
             //it will be used as a mapping table
-            return Repository.AddLobbyMember(lobbyId, userId);
+            return LobbyRepository.AddLobbyMember(lobbyId, userId);
         }
 
         //we will also need a method to return everyone in a specific lobby
-        public static List<User> GetMemberList(Guid LobbyId)
+        public static List<User> GetMemberList(string LobbyId, string pinNumber)
         {
-            return Repository.GetAllLobbyMembersByLobbyId(LobbyId);
+            //we will use this to ensure we do not have any malicious code possibly going to the db
+            //we will need a way to return these errors
+            try { Guid.Parse(LobbyId); } catch (Exception) { return null; }
+
+            //we will also need to ensure the pinnumber isnt malicious
+            try { int.Parse(pinNumber); } catch (Exception) { return null; }
+
+            //ensure lobby exists and the pin is correct
+            Lobby lobby = LobbyRepository.GetLobbyByIdAndPinNumber(LobbyId, pinNumber);
+
+            if (lobby != null)
+            {
+                return LobbyRepository.GetAllLobbyMembersByLobbyId(LobbyId);
+            }
+
+            return null;
         }
 
         //we will need a method to close the lobby, aka remove the record from the lobby table and all memebers from lobby member table
-        public string Close(string LobbyId)
+        public static string Close(string LobbyId, string pinNumber)
         {
-            Repository.DeleteLobbyRecords(LobbyId);
+            //we will use this to ensure we do not have any malicious code possibly going to the db
+            try { Guid.Parse(LobbyId); } catch (Exception e) { return String.Format("{\"Error\": \"{0}\"}", e.ToString()); }
 
-            return "Lobby has been deleted";
+            //we will also need to ensure the pinnumber isnt malicious
+            try { int.Parse(pinNumber); } catch (Exception e) { return String.Format("{\"Error\": \"{0}\"}", e.ToString()); }
+
+            Lobby lobby = LobbyRepository.GetLobbyByIdAndPinNumber(LobbyId, pinNumber);
+
+            if (lobby != null)
+            {
+                LobbyRepository.DeleteLobbyRecords(LobbyId);
+                return "Lobby has been deleted";
+            }
+
+            return "Error. Lobby Not Found.";
         }
     }
 }

@@ -9,6 +9,8 @@ namespace io.WhatShouldiEat.Models
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
+        public string LobbyId { get; set; }
+        public string LobbyMemberId { get; set; }
         public enum Role
         {
             BaseUser, 
@@ -19,7 +21,7 @@ namespace io.WhatShouldiEat.Models
         {
             User.Role role = User.Role.BaseUser;
 
-            switch (Repository.GetUserRole(Id.ToString()))
+            switch (UserRepository.GetUserRole(Id.ToString()))
             {
                 case "Base": role = User.Role.BaseUser; break;
                 case "Admin": role = User.Role.Admin; break;
@@ -30,7 +32,7 @@ namespace io.WhatShouldiEat.Models
 
         public static bool CheckIfUserExists(string userId)
         {            
-            return Repository.GetUserById(userId) == null ? false : true;
+            return UserRepository.GetUserById(userId) == null ? false : true;
         }
 
         //we will need a method to return the role of a user

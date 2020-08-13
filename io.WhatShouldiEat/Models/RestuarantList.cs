@@ -24,7 +24,7 @@ namespace io.WhatShouldiEat.Models
                 if (restaurant.Name == null || restaurant.Name.Equals(String.Empty)) return "List Not Saved, Null Name Value.";
             }
 
-            Repository.SaveRestaurantListToUser(user, restaurants);
+            RestaurantListRepository.SaveRestaurantListToUser(user, restaurants);
 
             return "List Saved Successfully";
         }
@@ -34,7 +34,7 @@ namespace io.WhatShouldiEat.Models
         public static List<Restaurant> GetRestaurantListsByUser(User user, string additionalFilter)
         {
             //the additional filter string will be used to append onto the end of the sql query for any additional filtering, making the method more flexible
-            return Repository.GetRestaurantsByUser(user, additionalFilter);
+            return RestaurantListRepository.GetRestaurantsByUser(user, additionalFilter);
         }
 
         //method to give user pre-determined restaurant lists
